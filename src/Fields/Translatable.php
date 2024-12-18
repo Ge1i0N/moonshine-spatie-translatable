@@ -3,14 +3,15 @@
 namespace VI\MoonShineSpatieTranslatable\Fields;
 
 use Illuminate\Support\Str;
-use MoonShine\Exceptions\FieldException;
-use MoonShine\Fields\Field;
-use MoonShine\Fields\Fields;
-use MoonShine\Fields\Json;
-use MoonShine\Fields\Select;
-use MoonShine\Fields\Text;
-use MoonShine\Fields\Textarea;
-use MoonShine\Fields\TinyMce;
+use MoonShine\Contracts\Core\DependencyInjection\FieldsContract;
+use MoonShine\Contracts\UI\FieldContract;
+use MoonShine\UI\Exceptions\FieldException;
+use MoonShine\UI\Fields\Field;
+use MoonShine\UI\Fields\Json;
+use MoonShine\UI\Fields\Select;
+use MoonShine\UI\Fields\Text;
+use MoonShine\UI\Fields\Textarea;
+use MoonShine\TinyMce\Fields\TinyMce;
 
 use Illuminate\Contracts\View\View;
 
@@ -21,7 +22,7 @@ final class Translatable extends Json
     protected bool $onlyValue = false;
 
     /**
-     * @var class-string<Field>
+     * @var class-string<FieldContract>
      */
     protected string $inputField = Text::class;
 
@@ -43,7 +44,7 @@ final class Translatable extends Json
 
     protected function prepareFill(array $raw = [], mixed $casted = null): mixed
     {
-        return $casted->getTranslations($this->column());
+        return $casted->getOriginal()->getTranslations($this->column);
     }
 
     /**
@@ -51,15 +52,14 @@ final class Translatable extends Json
      */
     public function onlyValue(
         string $value = 'Value',
-        ?Field $valueField = null,
+        ?FieldContract $valueField = null,
     ): static
     {
         throw new FieldException('Can`t set onlyValue for this field!');
     }
 
-    public function getFields(mixed $data = null): Fields
+    public function getFields(mixed $data = null): FieldsContract
     {
-
         $inputField = $this->inputField::make(__('Value'), 'value');
 
         if (empty($this->fields)) {
@@ -110,7 +110,6 @@ final class Translatable extends Json
 
     public function textarea(): static
     {
-
         $this->inputField = Textarea::class;
 
         return $this;
@@ -133,7 +132,7 @@ final class Translatable extends Json
     public function customInputField(string $class): static
     {
         if (!is_subclass_of($class, Field::class)) {
-            throw new FieldException('The passed class must be a subclass of MoonShine\Fields\Field');
+            throw new FieldException('The passed class must be a subclass of MoonShine\UI\Fields\Field');
         }
 
         $this->inputField = $class;
@@ -144,8 +143,8 @@ final class Translatable extends Json
     public function keyValue(
         string $key = 'Language',
         string $value = 'Value',
-        ?Field $keyField = null,
-        ?Field $valueField = null,
+        ?FieldContract $keyField = null,
+        ?FieldContract $valueField = null,
     ): static {
         $this->fields([
             Select::make($key, 'key')
@@ -165,6 +164,7 @@ final class Translatable extends Json
 
     protected function resolvePreview(): View|string
     {
-        return $this?->data?->{$this->column()} ?? '';
+        return $this?->data?->{$this->column} ?? '';
     }
 }
+
